@@ -1,0 +1,37 @@
+---
+title: "Atividade prática 1: estatística descritiva"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+echo: false
+warning: false
+message: false
+---
+
+## Exercício 1: Média, Mediana e Moda
+
+Conjunto de Dados: Notas finais de uma turma de Introdução à Estatística: 75, 88, 92, 85, 91, 88, 79, 84, 91, 77, 85, 93.
+
+-   Calcule a média das notas finais da turma.
+
+-   Determine a mediana das notas.
+
+-   Encontre a moda das notas, se houver.
+
+## Exercício 2: Range (Amplitude) e Desvio Padrão
+
+Conjunto de Dados: Salários (em milhares de reais) de um pequeno departamento de uma empresa: 8, 10, 7, 12, 9, 11, 9, 8, 10, 11.
+
+-   Calcule a amplitude (range) dos salários.
+-   Determine o desvio padrão dos salários para entender a dispersão em relação à média.
+
+## Exercício 3: Aplicando Todos os Conceitos
+
+Conjunto de Dados: Tempos (em minutos) para completar uma prova de matemática: 55, 42, 68, 55, 70, 42, 65, 55, 60, 44.
+
+-   Calcule a média dos tempos.
+-   Determine a mediana dos tempos.
+-   Identifique a moda dos tempos, se existir.
+-   Calcule a amplitude (range) dos tempos.
+-   Determine o desvio padrão dos tempos para avaliar a variabilidade.

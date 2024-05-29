@@ -1,0 +1,77 @@
+---
+title: "Livro de Códigos - Pesquisa sobre assédio moral"
+format: html
+echo: false
+warning: false
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(gt)
+```
+
+
+```{r}
+amostra_total <- read_csv("./data/total_sample.csv")
+
+df_itens <- read_xlsx("./data/para_code_book.xlsx")
+
+df_empatia <- read_csv("./data/empatia_para_formacao.csv")
+```
+
+```{r}
+naq <- df_itens |> 
+  select("Alguém reteve informações que podem afetar o seu desempenho no trabalho.":"Foi ameaçado(a) de violência ou abuso físico ou foi alvo de violência real.",
+         "Estas questões são relacionadas a certas dores e problemas que podem ter lhe incomodado nos últimos 30 dias. Se você acha que a questão se aplica a você e você teve o problema descrito nos últimos 30 dias responda SIM. Por outro lado, se a questão não se aplica a você e você não teve o problema nos últimos 30 dias, responda NÃO. Lembre-se: o diagnóstico definitivo só pode ser fornecido por um profissional. [Tem dores de cabeça com frequência?]":"Estas questões são relacionadas a certas dores e problemas que podem ter lhe incomodado nos últimos 30 dias. Se você acha que a questão se aplica a você e você teve o problema descrito nos últimos 30 dias responda SIM. Por outro lado, se a questão não se aplica a você e você não teve o problema nos últimos 30 dias, responda NÃO. Lembre-se: o diagnóstico definitivo só pode ser fornecido por um profissional. [Fica cansado(a) com facilidade?]",
+         "Qual seu sexo?","Qual a sua cor/raça?",
+         "Qual o seu nível de escolaridade?",
+         "Em que série(s) você atua? Você pode escolher mais de um item caso atue em mais de um nível de ensino.",
+         "Qual a sua idade?","Quanto anos de experiência você tem como professor, considerando a sua carreira como um todo?",
+         "Qual a renda mensal da sua família (estime o valor somado de todos que trabalham e colaboram com as despesas)?",
+         "Quantas pessoas moram com você e dependem da renda da sua família?") |> 
+  colnames()
+
+naq_code <- tibble(
+  Descrição = naq
+) |> 
+  add_row(Descrição = "Em que região você trabalha", .after = 45)
+
+naq_itens <- amostra_total |> 
+  select(n1:n22, starts_with("srq"),
+         sex:dependents_of_family_income) |> 
+  colnames()
+
+
+naq_code <- naq_code |> 
+  mutate(
+    Item = naq_itens,
+    Índice = 1:nrow(naq_code),
+    Descrição = str_remove(Descrição, "Estas questões são relacionadas a certas dores e problemas que podem ter lhe incomodado nos últimos 30 dias. Se você acha que a questão se aplica a você e você teve o problema descrito nos últimos 30 dias responda SIM. Por outro lado, se a questão não se aplica a você e você não teve o problema nos últimos 30 dias, responda NÃO. Lembre-se: o diagnóstico definitivo só pode ser fornecido por um profissional."),
+    Descrição = str_remove(Descrição, "\\["),
+    Descrição = str_remove(Descrição,  "\\]")
+  ) |> 
+  relocate(Índice, .before = 1)
+
+naq_code |> 
+  write_csv("./data/naq_code_book.csv")
+```
+
+## Livro de códigos: pesquisa sobre assédio moral
+
+```{r}
+naq_code |> 
+  gt() |> 
+  cols_align(
+    align =  "center",
+    columns = c(Índice, Item)
+  ) |> 
+  tab_style(
+     style = cell_text(align = "center"),
+     locations = cells_column_labels(
+       columns = Descrição)
+  )
+```

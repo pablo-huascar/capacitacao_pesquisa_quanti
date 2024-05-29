@@ -1,0 +1,204 @@
+---
+title: "Atividade prática: Correlação"
+lang: pt-br
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+echo: false
+include: false
+warning: false
+message: false
+theme: cosmo
+---
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(cowplot)
+theme_set(theme_cowplot())
+```
+
+Bancos dados disponíveis no módulo "R data sets" no Jamovi.
+
+## Dados sobre carros: Testes de estrada de carros da Motor Trend
+
+Banco de dados: `mtcars`
+
+**Descrição**
+
+Os dados foram extraídos da revista Motor Trend US de 1974 e compreendem o consumo de combustível e 10 aspectos do design e desempenho de automóveis para 32 automóveis (modelos de 1973 a 1974).
+
+**Formato** Um banco de dados com 32 observações em 11 variáveis (numéricas).
+
+-   `mpg`: Miles/(US) gallon
+-   `cyl`: Number of cylinders
+-   `disp`: Displacement (cu.in.)
+-   `hp`: Gross horsepower
+-   `drat`: Rear axle ratio[^1]
+-   `wt`: Weight (1000 lbs)
+-   `qsec`: 1/4 mile time
+-   `vs`: Engine (0 = V-shaped, 1 = straight)
+-   `am`: Transmission (0 = automatic, 1 = manual)
+-   `gear`: Number of forward gears
+-   `carb`: Number of carburetors
+
+[^1]: A razão do eixo traseiro. A razão de transmissão do eixo traseiro indica o número de voltas do eixo de transmissão para cada rotação do eixo da roda. Um veículo com uma razão alta forneceria mais torque e, portanto, mais capacidade de reboque, por exemplo.
+
+**Exercício**
+
+Objetivo: Explorar a relação entre a variável `mpg` (Miles/(US) gallon: milhas por galão) e as variáveis `drat` (Rear axle ratio - Razão do eixo traseiro) e `wt`(Weight: peso) do conjunto de dados `mtcars`.
+
+-   Crie um gráfico de dispersão (scatter plot) para visualizar as relação entre `mpg` e `hp` e entre `mpg` e `wt`. Insira uma linha de regressão.
+
+```{r}
+ggplot(mtcars, aes(x = drat, y = mpg)) + 
+  geom_point() +
+   geom_smooth(method = "lm", se = F)
+  labs(
+    title = "Relação entre MPG e DRAT", 
+    x = "Razão do eixo traseiro (drat)", 
+    y = "Milhas por Galão (mpg)"
+  )
+ 
+```
+
+```{r}
+ggplot(mtcars, aes(x = wt, y = mpg)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(
+    title = "Relação entre MPG e WT", 
+    x = "Peso (wt)", 
+    y = "Milhas por Galão (mpg)"
+  ) 
+  
+```
+
+-   Verifique se os dados seguem uma distribuição normal.
+
+```{r}
+mtcars |>
+  select(where(is.numeric)) |>
+  map_df(~ tidy(shapiro.test(.x)), .id = "variable")
+```
+
+-   Calcule a correlação adequada entre `mpg` e `drat` e entre `mpg` e `wt`.
+
+```{r}
+cor.test(mtcars$mpg, mtcars$hp, method = "pearson") |> 
+  tidy()
+
+cor.test(mtcars$mpg, mtcars$wt, method = "pearson") |> 
+  tidy() |> 
+  mutate(
+    p.value = round(p.value, 3)
+  )
+```
+
+-   Relate os resultados e avalie quais tipos de carro são mais econômicos.
+
+## Dados sobre prisões realizadas: Taxas de crimes violentos por estado dos EUA
+
+Banco de dados: `USArrests`
+
+**Descrição** Este banco de dados contém estatísticas sobre detenções por 100.000 residentes por agressão, homicídio e estupro em cada um dos 50 estados dos EUA em 1973. Também é fornecida a percentagem da população que vive em áreas urbanas.
+
+**Formato** Um banco de dados com 50 observações em 4 variáveis.
+
+-   `Murder`: Prisões por assassinato (por 100.000)
+-   `Assault`: Prisões por agressão (por 100.000)
+-   `UrbanPop`: Porcentagem de população urbana
+-   `Rape`: Prisões por estupro (por 100.000)
+
+**Exercício**
+
+Objetivo: Explorar a relação entre a variáveis `Murder` e `UrbanPop`.
+
+-   Crie um gráfico de dispersão (scatter plot) para visualizar as relação entre `Murder` e `UrbanPop`. Insira uma linha de regressão.
+
+```{r}
+ggplot(USArrests, aes(x = UrbanPop, y = Murder)) + 
+  geom_point() +
+   geom_smooth(method = "lm", se = F)
+  labs(
+    title = "Relação entre Murder e UrbanPop", 
+    x = "Porcentagem de população urbana", 
+    y = "Prisões por assassinato (por 100.000)"
+  )
+ 
+```
+
+-   Verifique se os dados seguem uma distribuição normal.
+
+```{r}
+USArrests |>
+  select(where(is.numeric)) |>
+  map_df(~ tidy(shapiro.test(.x)), .id = "variable")
+```
+
+-   Calcule a correlação adequada entre `Murder` e `UrbanPop`.
+
+```{r}
+cor.test(USArrests$Murder, USArrests$UrbanPop, method = "pearson") |> 
+  tidy()
+```
+
+-   Relate os resultados.
+
+---------
+
+## Dados suíços de fertilidade e indicadores socioeconômicos (1888)
+
+Banco de dados: `swiss`
+
+**Descrição** Medida padronizada de fertilidade e indicadores socioeconômicos para cada uma das 47 províncias de língua francesa da Suíça por volta de 1888.
+
+**Formato** Um banco de dados com 47 observações sobre 6 variáveis, cada uma delas em porcentagem.
+
+-   `Fertility`: Medida comum de fertilidade padronizada
+-   `Agriculture`: % de homens envolvidos na agricultura como ocupação [parei aqui]
+-   `Examination`: % de recrutas que recebem a nota mais alta no exame do exército
+-   `	Education`: % educação além da escola primária para recrutados
+-   `Catholic`: % ‘católico’ (em oposição a ‘protestante’)
+-   `Infant.Mortality`: nascidos vivos que vivem menos de 1 ano
+
+**Exercício**
+
+Objetivo: Explorar a relação entre as variáveis `Infant.Mortality` e `Fertility`.
+
+-   Crie um gráfico de dispersão (scatter plot) para visualizar as relação entre `Infant.Mortality` e `Fertility`. Insira uma linha de regressão.
+
+```{r}
+ggplot(swiss, aes(x = Fertility, y = Infant.Mortality)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = F) +
+  labs(
+    title = "Relação entre Infant.Mortality e Fertility", 
+    x = "Medida comum de fertilidade padronizada", 
+    y = "Nnascidos vivos que vivem menos de 1 ano"
+  )
+ 
+```
+
+-   Verifique se os dados seguem uma distribuição normal.
+
+```{r}
+swiss |>
+  select(where(is.numeric)) |>
+  map_df(~ tidy(shapiro.test(.x)), .id = "variable")
+```
+
+-   Calcule a correlação adequada entre `Infant.Mortality` e `Fertility`.
+
+```{r}
+cor.test(swiss$Fertility, swiss$Infant.Mortality, method = "pearson") |> 
+  tidy()
+```
+
+-   Relate os resultados.
+
+
+
+
+

@@ -1,0 +1,214 @@
+---
+title: "Atividade prática 3: teste t para amostras independentes"
+authors: 
+  - name: Francisco Pablo Huascar Aragão Pinheiro
+    orcid: 0000-0001-9289-845X
+    url: http://lattes.cnpq.br/8266089190930601
+    affiliations: 
+      - name: Universidade Federal do Ceará  
+  - name: Alex Sandro de Moura Grangeiro
+    orcid: 0000-0001-7668-7978
+    url: http://lattes.cnpq.br/9840632174810869
+    affiliations: 
+      - name: Universidade Federal do Ceará
+lang: pt-br
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+echo: false
+warning: false
+message: false
+---
+
+```{r}
+library(tidyverse)
+library(gt)
+library(rstatix)
+data("mtcars")
+tidymodels::tidymodels_prefer()
+
+df <- read_csv("./data/prof_ufc_tmcs_contexto.csv")
+```
+
+O banco de dados `prof_es_tmcs_contexto.csv` é oriundo de um estudo que teve como objetivo analisar as repercussões do contexto de trabalho remoto para a saúde mental de professores da Universidade Federal do Ceará.
+
+## Instrumentos
+
+Foram utilizados os seguintes instrumentos: o Self-Report Questionnaire-20 (SRQ-20) e a Escala de Avaliação do Contexto de Trabalho Docente Remoto (EACTDR). O questionário também incluiu perguntas sobre dados demográficos dos participantes.
+
+O SRQ-20 é utilizado para triagem de Transtornos Mentais Comuns e é composto por 20 itens (ex.: “Você tem se sentido triste ultimamente?”), que podem ser respondidos “sim” ou “não” sobre sintomas ocorridos nos 30 dias anteriores ao seu início. Este instrumento não fornece diagnósticos específicos de transtornos mentais. Foi utilizado o ponto de corte estabelecido para a população brasileira de 7/8 para caso/não caso (Gonçalves et al., 2008). Neste estudo, o instrumento apresentou consistência interna adequada (α = 0,94; ω = 0,94) e sua pontuação é calculada da seguinte forma: as respostas negativas são codificadas como zero, enquanto as respostas positivas como 1. As pontuações de todos os itens são então somadas.
+
+A EACTDR (Cunha et al., no prelo) foi desenvolvida para avaliar o contexto de trabalho remoto para professores do ensino fundamental e médio e era composta por 33 itens organizados em três fatores: organização do trabalho, condições de trabalho e relações socioprofissionais (Ferreira & Mendes, 2008). O primeiro refere-se ao trabalho e à gestão de pessoas, como tempo, ritmo, jornada de trabalho, produtividade e regras (ex.: “Atividades de trabalho realizadas pela internet exigem muito tempo de preparação”). O segundo fator diz respeito aos recursos materiais e à infraestrutura do ambiente de trabalho, como instrumentos, equipamentos e suporte organizacional (ex.: “O computador ou celular fica lento ou trava enquanto faço meu trabalho”). O último fator representa as interações entre professores e demais membros da comunidade escolar (ex.: “Há dificuldades de comunicação entre professores e coordenadores”).
+
+No estudo de validação (Cunha et al., no prelo), os três fatores explicaram 55,8% da variância total. O instrumento apresentou índices de ajuste adequados (RMSEA = 0,05, IC 90%: 0,048-0,049, TLI = 0,99, CFI = 0,99). O alfa de Cronbach para os três fatores variou de 0,83 a 0,92. O ômega do McDonald's variou de 0,87 a 0,94. O instrumento utiliza uma escala de 5 pontos que varia de 1 (“nunca”) a 5 (“sempre”). Como os itens contêm afirmações negativas, pontuações mais altas implicam piores percepções do contexto de trabalho.
+
+No presente estudo, adaptamos o EACTDR para professores do ensino superior. Foram excluídos dez itens que não se aplicavam ao contexto universitário e foram feitas pequenas alterações nos demais itens para ajustá-los à amostra. Os fatores da escala são calculados pela média dos seus respectivos itens, conforme a tabela a seguir:
+
+
+```{r}
+itens_org <- df |> 
+  select(ct_12, ct_13, ct_15, ct_16,
+         ct_17,ct_19, ct_20, ct_22,
+         ct_25) |> 
+  names() |> 
+  str_c(collapse = ", ")
+```
+
+```{r}
+itens_rel <- df |> 
+  select(ct_27, ct_31, ct_32,
+         ct_33, ct_36, ct_37,
+         ct_38) |> 
+  names() |> 
+  str_c(collapse = ", ")
+```
+
+```{r}
+itens_cond <- df |> 
+  select(ct_1, ct_2, ct_3,
+         ct_4, ct_6) |> 
+  names() |> 
+  str_c(collapse = ", ")
+```
+
+```{r}
+tabela_itens <- tibble(
+  Fator = c("Organização do Trabalho", "Relações Socioprofissionais", "Condições de Trabalho"),
+  Itens = c(itens_org, itens_rel, itens_cond)
+)
+```
+
+```{r}
+tabela_itens |> 
+  gt() |>
+  tab_header(
+    title = md("**Cálculo dos fatores da EACTDR**")
+  ) |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_column_labels(
+      columns = c(Fator, Itens))
+  ) 
+```
+
+Na tabela abaixo, estão indicados as assertivas de cada item
+
+```{r}
+itens_org_indices <- df |> 
+  select(ct_12, ct_13, ct_15, ct_16,
+         ct_17,ct_19, ct_20, ct_22,
+         ct_25) |> 
+  names()
+
+itens_org_texto <- c("Há cobrança por parte dos alunos para responder rapidamente dúvidas e questões enviadas através de redes sociais (p. ex.: WhatsApp, Instagram, Messenger etc.).",
+                     "Preciso responder e-mails, ligações ou mensagens de trabalho que chegam fora do horário de expediente.",
+                     "As atividades de trabalho realizadas pela internet demandam muito tempo de preparação.",
+                     "O horário de descanso e/ou finais de semana são usados para trabalho.",
+                     "Os prazos para a realização das tarefas são curtos.",
+                     "Há uma grande quantidade de formulários ou questionários online para preencher.",
+                     "Há um número excessivo de reuniões online.",
+                     "Existe forte cobrança por resultados em relação ao meu trabalho.",
+                     "Falta tempo para realizar pausas de descanso no trabalho.")
+
+```
+
+```{r}
+itens_rel_indices <- df |> 
+  select(ct_27, ct_31, ct_32,
+         ct_33, ct_36, ct_37,
+         ct_38) |> 
+  names()
+
+
+itens_rel_texto <- c("Os gestores realizam planejamentos e tomam decisões sem consultar os professores.",
+                     "Existem dificuldades na comunicação entre docentes e gestores.",
+                     "Falta apoio dos gestores para realizar meu trabalho.",
+                     "A comunicação entre os professores é insatisfatória.",
+                     "Não há autonomia para decidir sobre as metodologias de ensino aplicadas nas aulas.",
+                     "Existem disputas profissionais entre os professores.",
+                     "Os professores não participam das decisões sobre o curso.")
+```
+
+
+```{r}
+
+itens_cond_indices <- df |> 
+  select(ct_1, ct_2, ct_3,
+         ct_4, ct_6) |> 
+  names()
+
+itens_cond_texto <- c("Durante a realização do meu trabalho, a minha conexão com a internet é ruim (cai com frequência, é lenta, demora para carregar vídeos etc.).",
+                      "Ao realizar reuniões online, ocorrem falhas no áudio e/ou no vídeo que prejudicam a comunicação.",
+                      "O espaço para a realização do trabalho é barulhento e/ou movimentado.",
+                      "O computador ou celular fica lento ou trava durante a realização do meu trabalho.",
+                      "Os equipamentos (celular, computador, tablet etc.) utilizados para o trabalho são compartilhados com outras pessoas.")
+
+```
+
+
+```{r}
+tabela_assertivas <- tibble(
+  Item = c(itens_org_indices, itens_rel_indices, itens_cond_indices),
+  Assertiva = c(itens_org_texto, itens_rel_texto, itens_cond_texto)
+) |> 
+  add_row(
+    Item = NA, 
+    Assertiva = "Organização do Trabalho",
+    .before = 1
+  ) |> 
+  add_row(
+    Item = NA, 
+    Assertiva = "Relações Socioprofissionais",
+    .before = 11
+  ) |> 
+  add_row(
+    Item = NA, 
+    Assertiva = "Condições de Trabalho",
+    .before = 19
+  ) 
+```
+
+```{r}
+tabela_assertivas |> 
+  gt() |> 
+  sub_missing(missing_text = "") |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_column_labels(
+      columns = c(Item, Assertiva))
+  ) |> 
+  tab_header(
+    title = md("**Adaptação da EACTDR para professores de Ensino Superior**")
+  )
+```
+
+## Atividades
+
+```{r}
+demo <- df |> select(gen:contrato) |> 
+  names() |> 
+  str_c(collapse =  ", ")
+```
+
+-   Descreva a amostra a partir das variáveis demográficas presentes no banco: `r demo`
+-   Calcule a prevalência de TMCs para amostra total
+-   Crie as seguintes variáveis com suas respectivas categorias:
+    -   `raca_dic`: "brancos" e "não brancos"
+    -   `idade_dic`: "mais velhas" (idade maior ou igual a mediana da variável) e "mais novas" (idade menor que a medianda da variável)
+    -   `rper`: renda per capita
+    -   `rper_dic`: "maior" (renda per capita maior ou igual a medianda da variável) e "menor" (renda per capita menor a medianda da variável)
+-   Compare as médias do fator relações profissionais entre as categorias das variáveis `gen` (gênero), `raca_dic`,
+`idade_dic`, `rper_dic`. Relate os resultados de forma apropriada.
+
+
+```{r}
+library(rstatix)
+
+mtcars |> 
+  group_by(am) |> 
+  shapiro_test(mpg)
+
+t.test(mpg ~ am, data = mtcars)
+```
+

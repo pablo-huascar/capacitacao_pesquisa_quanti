@@ -1,0 +1,371 @@
+---
+title: "Manipulação de dados no Jamovi"
+authors: 
+  - name: Francisco Pablo Huascar Aragão Pinheiro
+  - orcid: 0000-0001-9289-845X
+  - url: http://lattes.cnpq.br/8266089190930601
+  - name: Alex Sandro de Moura Grangeiro
+  - orcid: 0000-0001-7668-7978
+  - url: http://lattes.cnpq.br/9840632174810869
+format: 
+  revealjs:
+      theme: simple
+      code-link: true
+      code-tools: true
+      code-line-numbers: false
+      fig-width: 6
+      fig-asp: 0.618
+      scrollable: true
+      echo: false
+      warning: false
+      message: false
+      progress: true
+      slide-number: true
+      logo: imagens/ufc_horizontal.png
+      css: logo.css
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(gt)
+
+penguins |> 
+  write_csv("./data/penguins.csv")
+```
+
+## Introdução
+
+-   É raro que os dados estejam da forma certa para fazer análises ou gráficos
+-   Transformações:
+    -   Criar variáveis (calculadas e transformadas)
+    -   Renomear variáveis
+    -   Filtrar casos
+
+## O banco de Dados dos [`penguins`](https://allisonhorst.github.io/palmerpenguins/)
+
+-   Banco de dados: uma coleção retangular de variáveis (nas colunas) e observações (nas linhas)
+-   `penguins`: `r nrow(penguins)` casos/observações
+-   Os dados foram coletados e disponibilizados pela Dra. Kristen Gorman e a Estação Palmer, Antártica LTER
+
+## Algumas Definições
+
+::: incremental
+-   **Variável**: uma quantidade, qualidade ou propriedade que você pode medir
+-   **Valor**: o estado de uma variável quando você a mede
+    -   [O valor de uma variável pode mudar de medição para medição]{style="font-size:20pt;"}
+:::
+
+## Algumas Definições
+
+::: incremental
+-   **Observação/caso**: conjunto de medições feitas em condições semelhantes
+    -   [Todas as medições em uma observação são feitas ao mesmo tempo e no mesmo objeto]{style="font-size:20pt;"}
+-   Uma observação/caso conterá vários valores, cada um associado a uma variável diferente.
+-   `penguins`
+    -   [Variável: atributo de todos os pinguins]{style="font-size:20pt;"}
+    -   [Observação: todos os atributos de um único pinguim]{style="font-size:20pt;"}
+:::
+
+## Banco de dados dos pinguins
+
+![](imagens/penguins_dataset.png)
+
+## Dados Tabulares
+
+::: incremental
+-   Conjunto de valores, cada um associado a uma variável e a uma observação.
+-   Os dados tabulares são organizados ("tidy") se cada valor for colocado em sua própria "célula", cada variável em sua própria coluna e cada observação em sua própria linha
+:::
+
+## Tidy data
+
+![](imagens/tidy.png)
+
+## Aba de variáveis
+
+![](imagens/aba_de_variaveis.png)
+
+## Aba de variáveis
+
+![](imagens/tipos_de_variaveis_1.png)
+
+## Rótulo, descrição, tipos de medidas, tipos de dados e valores ausentes
+
+::: {layout-ncol="2"}
+![](imagens/tipo_de_dados.png)
+
+![](imagens/tipo_de_medida.png)
+:::
+
+## Exercício
+
+-   Os casos 4 e 272 tem valores ausentes (células em branco)
+    -   Crie um código para os valores ausentes e faça com que o jamovi reconheça esse código em todas as variáveis pertinentes
+-   Corrija o tipo de e medida da variável `year`
+-   Renomeie as variáveis traduzindo-as
+
+## Criação de variáveis calculadas
+
+::: columns
+::: {.column width="50%"}
+![](imagens/adicionar_variaveis.png)
+:::
+
+::: {.column width="50%"}
+![](imagens/funcoes_variaveis_calculadas.png)
+:::
+:::
+
+## Criação de variáveis calculadas
+
+| Função | Objetivo                                             |
+|--------|------------------------------------------------------|
+| MEAN   | Calcula a média de um conjunto de números/ variáveis |
+| VMEAN  | Retorna a média da variável                          |
+| SUM    | Calcula a soma de um conjunto de números/ variáveis  |
+| VSUM   | Retorna a soma da variável                           |
+| VSTDEV | Retorna o desvio padrão da variável                  |
+
+: Funções do jamovi
+
+## Criação de variáveis compostas
+
+-   Criadas a partir da combinação de duas ou mais variáveis originais
+-   Objetivo: capturar uma determinada dimensão ou constructo que não pode ser medido diretamente por nenhuma das variáveis isoladamente.
+-   Exemplo: fator ou componente de uma escala calculado pela média de um grupo de itens
+
+## DASS-21
+
+-   Três dimensões: depressão, ansiedade e estresse
+-   21 itens, sendo 7 para cada dimensão
+-   Escala de resposta: 0 a 3
+-   Valores mais altos indicam níveis mais elevados de depressão, ansiedade e estresse
+-   Cada dimensão é calculada com a soma dos respectivos itens
+
+## DASS-21: depressão
+
+```{r}
+#| echo: false
+dass_itens <- read_csv("./data/dass_21_itens.csv")
+
+depressao_itens <- 
+  dass_itens |> 
+  pivot_longer(
+    cols = everything()
+    ) |> 
+  select(value) |>
+  slice(c(3,5,10,13,16,17,21)) |>
+  mutate(
+    Item = c(3,5,10,13,16,17,21),
+    .before = 1
+    ) |> 
+  rename("Assertiva" = value) |> 
+  gt() |> 
+  cols_align(
+    align = "center",
+    columns = "Item"
+  )
+
+depressao_itens
+```
+
+## Criação da variável depressão
+
+![](imagens/criacao_depressao.png)
+
+## Criação da variável depressão
+
+```{r}
+depressao_itens
+```
+
+
+## DASS-21: Ansiedade
+
+```{r}
+#| echo: false
+
+ansiedade_itens <- 
+  dass_itens |> 
+  pivot_longer(
+    cols = everything()
+    ) |> 
+  select(value) |> 
+  slice(c(2,4,7,9,15,19,20)) |> 
+  mutate(
+    Item = c(2,4,7,9,15,19,20),
+    .before = 1
+    ) |>
+  rename("Assertiva" = value) |> 
+  gt() |> 
+  cols_align(
+    align = "center",
+    columns = "Item"
+  )
+
+ansiedade_itens  
+```
+
+## Exercício
+
+-   Crie a variável ansiedade
+
+## Exercício
+
+```{r}
+ansiedade_itens  
+```
+
+
+## DASS-21: Estresse
+
+```{r}
+#| echo: false
+
+estresse_itens <- 
+  dass_itens |> 
+  pivot_longer(
+    cols = everything()
+    ) |> 
+  select(value) |> 
+  slice(c(1,6,8,11,12,14,18)) |> 
+  mutate(
+    Item = c(1,6,8,11,12,14,18),
+    .before = 1
+    ) |> 
+  rename("Assertiva" = value) |> 
+  gt() |> 
+  cols_align(
+    align = "center",
+    columns = "Item"
+  )
+
+estresse_itens
+```
+
+## Exerecício
+
+-   Crie a variável estresse
+
+## Exerecício
+
+```{r}
+estresse_itens
+```
+
+
+## Criação de variáveis transformadas
+
+::: {layout-ncol="2"}
+![](imagens/variavel_transformada.png)
+
+![](imagens/menu_variavel_transformada.png)
+:::
+
+## Operadores lógicos
+
+-   `>` maior que
+-   `>=` maior ou igual que
+-   `<` menor que
+-   `<=` menor ou igual que
+-   `==` igual a
+-   `!=` não é igual a
+
+## Operadores lógicos
+
+-   Combinar condições:
+    -   NOT ("Negação da condição")
+    -   or ("verifique qualquer uma das condições")
+    -   and ("verifique ambas as condições")
+
+## Pontos de corte da DASS-21
+
+| Nível               | Ansiedade | Depressão| Estresse |
+|---------------------|-----------|----------|----------|
+| Normal              | \< 7      | \< 9     | \< 14    |
+| Leve                | \< 9      | \< 13    | \< 18    |
+| Moderado            | \< 14     | \< 20    | \< 25    |
+| Severo              | \< 19     | \< 27    | \< 33    |
+| Extremamente severo | \> 19     | \> 27    | \> 33    |
+
+: Pontos de corte da DASS-21
+
+## Avaliação qualitativa da depressão
+
+::: {layout-ncol="2"}
+![](imagens/qualitativa_depre_1.png)
+
+![](imagens/qualitativa_depre_2.png)
+:::
+
+## Exercício
+
+-   Crie as variáveis `estresse_corte` e `ansiedade_corte` com as avaliações qualitativas do estresse e da ansiedade
+
+# Selecionar subconjuntos dos dados: filtros
+
+![](imagens/filtro_1.png){width="439"}
+
+# Selecionar subconjuntos dos dados: filtros
+
+![](imagens/filtro2.png){width="439"}
+
+## Filtrando um subconjunto
+
+-   Somente os casos com depressão avaliada como normal
+
+::: {layout-ncol="2"}
+![](imagens/filtro_normal.png)
+
+![](imagens/filto_normal2.png)
+:::
+
+## Filtrando um subconjunto
+
+-   Somente os casos com depressão avaliada como leve ou moderada
+
+::: {layout-ncol="2"}
+![](imagens/filtro_level_moderado.png)
+
+![](imagens/filtr_diferente_normal.png)
+:::
+
+## Filtrando um subconjunto
+
+-   Somente os casos com depressão avaliada como normal e que sejam mulheres
+
+![](imagens/filtro_normal_mulheres.png)
+
+## Filtrando um subconjunto
+
+-   Somente os casos com depressão avaliada como normal e que sejam mulheres
+
+::: {layout-ncol="2"}
+![Sem o filtro](imagens/normal_mulheres_sem_filtro.png)
+
+![Com o filtro](imagens/normal_mulheres_com_filtro.png){width="472"}
+:::
+
+## Filtrando um subconjunto
+
+-   Pessoas com idade maior que 35 e menor que 50 anos
+
+:::{layout-ncol="2"}
+![](imagens/idade_35_50.png)
+
+![](imagens/idade_35_50_2.png)
+:::
+
+## Exercícios
+
+-   Qual a média e o desvio padrão da idade de pessoas que não têm indicativo de ansiedade, depressão e estresse? 
+-   Qual a mediana da idade de pessoas do sexo feminino que têm indicativo de depressão leve
+- Qual a menor e a maior idade de pessoas que têm algum indicativo de estresse?
+- Entre as pessoas com idades entre 19 e 35 anos, quantas têm indicativo de depressão leve ou ansiedade moderada. Qual a média de idade para esse grupo?
+
+
+
