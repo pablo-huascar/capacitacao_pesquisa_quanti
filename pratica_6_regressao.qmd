@@ -1,0 +1,322 @@
+---
+title: "Atividade prática: Regressão"
+lang: pt-br
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+echo: false
+include: false
+warning: false
+message: false
+theme: cosmo
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(tidymodels)
+library(cowplot)
+library(olsrr)
+library(carData)
+library(car)
+library(openintro)
+library(ggthemes)
+library(conflicted)
+conflicts_prefer(dplyr::select)
+conflicts_prefer(dplyr::filter)
+```
+
+Faça as análises exploratórias (inclusive com gráficos), realize as análises de regressão linear a partir da VD e das VIs indicadas e:
+
+-   Avalie os pressupostos;
+-   Relate os pressupostos que foram atendidos e os que não foram atendidos;
+    -   Indique o número de outliers que são casos influentes no modelo a partir da distância de Cook, mas não os remova das análises
+-   Nos modelos em que todos os pressupostos da regressão forem atendidos:
+    -   Monte a equação de regressão (só inclua na equação os preditores que forem significativos no modelo);
+    -   Escreva a interpretação do intercepto $(b_{0})$ e dos parâmetros de inclinação $(b_{1})$; 
+    - Avalie se o intercepto tem uma interpretação prática ou somente matemática
+    -   Calcule manualmente os valores previstos para os casos solicitado(s);
+    -   Escreva o relato dos resultados conforme modelo apresentado a seguir.
+
+## Modelo para o relato da regressão
+
+Avaliamos os pressupostos da regressão linear, confirmando a ausência de multicolinearidade (VIF < 2; tolerância > 0,3) e a independência dos resíduos (Durbin-Watson = 2,01; $p = 0,80$). No entanto, detectamos 104 potenciais outliers e encontramos heterocedasticidade (teste Breusch-Pagan: $\chi^2 = 47,1;$ $p < 0,001$) e distribuição não normal dos resíduos (teste Shapiro-Wilk: $W = 0,92$; $p < 0,001$). Além disso, as variâncias não foram homogêneas entre os níveis de escolaridade (teste de Levene: $\chi^2 = 15,96$; $p < 0,01$) e as categorias dos estilos de liderança do diretor escolar (teste de Levene: $\chi^2 = 8,68$; $p = 0,03$).
+
+O modelo foi significativo ($F(16, 1794) = 14,16$); $p < 0,001$) e explicou 13% da variância $(R^2_{adj} = 0,13)$. Dentre as variáveis demográficas, apenas a idade previu os sintomas de depressão $(\beta = -0,03$; $p = 0,01)$.
+
+Em relação aos níveis de ensino, professores que atuavam na educação infantil apresentaram médias de depressão mais elevadas em comparação aos que lecionavam nos anos finais do ensino fundamental $(\beta = -0,06$; $p = 0,05)$ e na categoria "outros" $(\beta = -0,10$); $p < 0,001)$. No que tange ao contexto de trabalho, a organização do trabalho $(\beta = -1,45$; $p < 0,001)$ e as relações socioprofissionais $(\beta = -0,62$; $p = 0,02)$ impactaram a variável desfecho. Assim, maiores escores nessas variáveis, indicando uma avaliação mais positiva do contexto de trabalho, estão associados a menores escores de depressão.
+
+## Dados sobre o prestígio das ocupações
+
+Em todas as regressões para o banco de dados `prestige_pt`, 
+calcule o valor previsto para os casos `34`, `56` e `15`.
+
+```{r}
+#| eval: false
+
+nomes <- c("educação", "renda", "mulheres",
+           "prestigio","censo","tipo")
+
+Prestige |>
+  as_tibble() |> 
+  rename_with(~ nomes) |> 
+  rownames_to_column("ocupacao") |> 
+  mutate(
+    type = case_when(tipo == "<NA>" ~ NA_character_,
+                     .default = tipo)
+    ) |> 
+  drop_na(type) |> 
+  write_csv("data/prestige_pt.csv")
+```
+
+Banco de dados: `Prestige`
+
+**Descrição** O banco de dados Prestige tem 102 linhas e 6 colunas. As observações são ocupações.
+
+**Formato**
+
+`educação`
+
+Média de anos de educação dos ocupantes da ocupação, em 1971.
+
+`renda`
+
+Renda média dos ocupantes, em dólares, em 1971.
+
+`mulheres`
+
+Porcentagem de ocupantes que são mulheres.
+
+`prestigio`
+
+Pontuação de prestígio Pineo-Porter para a ocupação, de uma pesquisa social realizada em meados da década de 1960.
+
+`censo`
+
+Código ocupacional do Censo Canadense.
+
+`tipo`
+
+Tipo de ocupação. Um fator com níveis (nota: fora de ordem): bc, Operário (Blue Collar); prof, Profissional, Gerencial e Técnico; wc, Administrativo (White Collar).
+
+```{r}
+Prestige <- Prestige |> 
+  mutate(
+    id = 1:n(),
+    type = case_when(type == "<NA>" ~ NA_character_,
+                     .default = type)
+    ) |>
+  rownames_to_column(var = "profission") |> 
+  relocate(id, .before = 1) |> 
+  drop_na(type)
+```
+
+**Exercício 1**
+
+-   VD: `prestigio`
+-   VIs: `tipo` e `renda`
+
+```{r}
+Prestige |> 
+  ggplot(aes(income, prestige, color = type)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = F)
+```
+
+```{r}
+#| eval: false
+modelo_prestige_1 <- lm(prestige ~ type + (income), Prestige)
+f <-list(ols_coll_diag,
+         ols_test_breusch_pagan,
+         durbinWatsonTest,
+         ols_test_normality)
+map(f, ~ .(modelo_prestige_1))
+rstatix::levene_test(Prestige, formula = prestige ~ type)
+
+modelo_prestige_1 |> 
+  tidy()
+```
+
+**Exercício 2**
+
+-   VD: `prestigio`
+-   VIs: `educação` e `renda`
+
+```{r}
+Prestige |> 
+  ggplot(aes(prestige, income, color = education)) +
+  geom_point() +
+  viridis::scale_color_viridis()
+```
+
+```{r}
+#| eval: false
+modelo_prestige_2 <- lm(prestige ~ education + income, Prestige)
+f <-list(ols_coll_diag,
+         ols_test_breusch_pagan,
+         durbinWatsonTest,
+         ols_test_normality)
+map(f, ~ .(modelo_prestige_2))
+
+
+modelo_prestige_2 |> 
+  tidy() |> 
+  mutate(
+    across(where(is.double),
+           \(x) round(x, 3))
+  )
+```
+
+**Exercício 3**
+
+-   VD: `prestigio`
+-   VIs: `tipo` e `mulheres`
+
+```{r}
+Prestige |> 
+  summarise(
+    M = mean(women),
+    .by = type
+  )
+```
+
+```{r}
+Prestige |> 
+  ggplot(aes(women, prestige, color = type)) +
+  geom_point()
+```
+
+```{r}
+#| eval: false
+modelo_prestige_3 <- lm(prestige ~ type + women, Prestige)
+f <-list(ols_coll_diag,
+         ols_test_breusch_pagan,
+         durbinWatsonTest,
+         ols_test_normality)
+map(f, ~ .(modelo_prestige_3))
+
+
+modelo_prestige_3 |> 
+  tidy(conf.int = T) |> 
+  mutate(
+    across(where(is.double),
+           \(x) round(x, 3))
+  )
+```
+
+**Exercício 4**
+
+-   VD: `prestigio`
+-   VIs: `tipo`, `renda`, `educacao` e `mulheres`
+
+```{r}
+#| eval: false
+modelo_prestige_4 <- lm(prestige ~ type + income + education 
+                        + women, Prestige)
+f <-list(ols_coll_diag,
+         ols_test_breusch_pagan,
+         durbinWatsonTest,
+         ols_test_normality)
+map(f, ~ .(modelo_prestige_4))
+
+
+modelo_prestige_4 |> 
+  tidy(conf.int = T) |> 
+  mutate(
+    across(where(is.double),
+           \(x) round(x, 3))
+  )
+```
+
+Banco de dados: `possum`
+
+**Descrição** Dados representando gambás na Austrália e Nova Guiné. Este é uma cópia do conjunto de dados com o mesmo nome no pacote `DAAG`, no entanto, o conjunto de dados incluído aqui possui menos variáveis.
+
+**Formato**
+
+Um banco de dados com 104 observações sobre as seguintes 8 variáveis.
+
+`site`
+
+O número do local onde o possum foi capturado.
+
+`pop`
+
+População, sendo Vic (Victoria) ou outra (Nova Gales do Sul ou Queensland).
+
+`sex`
+
+Gênero, sendo m (masculino) ou f (feminino).
+
+`age`
+
+Idade.
+
+`head_l`
+
+Comprimento da cabeça, em mm.
+
+`skull_w`
+
+Largura do crânio, em mm.
+
+`total_l`
+
+Comprimento total, em cm.
+
+`tail_l`
+
+Comprimento da cauda, em cm.
+
+```{r}
+modelo_possum_1 <- lm(total_l ~ sex + age + head_l, possum)
+
+f <-list(ols_coll_diag,
+         ols_test_breusch_pagan,
+         durbinWatsonTest,
+         ols_test_normality)
+map(f, ~ .(modelo_possum_1))
+
+summary(modelo_possum_1)
+```
+
+
+```{r}
+possum_augment <- modelo_possum_1 |> 
+  augment() |> 
+  select(.fitted, sex, age, head_l) |> 
+  mutate(
+    id = 1:n(),
+    sex_dmy = case_when(sex == "m" ~ 1,
+                        .default = 0)
+  ) |> 
+  relocate(id, .before = 1) |> 
+  relocate(sex_dmy, .after = sex)
+```
+
+```{r}
+b0 <- 11.28899
+b1 <- -1.93542
+b2 <- 0.05102
+b3 <- 0.82926
+x1 <- possum_augment$sex_dmy
+x2 <- possum_augment$age
+x3 <- possum_augment$head_l
+
+fitted_possum <- function(caso) {
+  
+  y  <-  b0 + b1*x1[caso] + b2*x2[caso] + b3*x3[caso]
+  y <- round(y, 1)
+  
+  print(y)
+  
+}
+```
+
+*Exercício 5*
+
+-   VD: `total_l`
+-   VIs: `pop`,  `sex`, `age` e `head_l`
+- Calcule o valor previsto para os casos `1`, `8` e `9`
+

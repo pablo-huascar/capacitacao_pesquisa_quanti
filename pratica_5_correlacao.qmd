@@ -49,7 +49,7 @@ Os dados foram extraídos da revista Motor Trend US de 1974 e compreendem o cons
 
 Objetivo: Explorar a relação entre a variável `mpg` (Miles/(US) gallon: milhas por galão) e as variáveis `drat` (Rear axle ratio - Razão do eixo traseiro) e `wt`(Weight: peso) do conjunto de dados `mtcars`.
 
--   Crie um gráfico de dispersão (scatter plot) para visualizar as relação entre `mpg` e `hp` e entre `mpg` e `wt`. Insira uma linha de regressão.
+-   Crie um gráfico de dispersão (scatter plot) para visualizar as relação entre `mpg` e `drat` e entre `mpg` e `wt`. Insira uma linha de regressão.
 
 ```{r}
 ggplot(mtcars, aes(x = drat, y = mpg)) + 
@@ -86,7 +86,7 @@ mtcars |>
 -   Calcule a correlação adequada entre `mpg` e `drat` e entre `mpg` e `wt`.
 
 ```{r}
-cor.test(mtcars$mpg, mtcars$hp, method = "pearson") |> 
+cor.test(mtcars$mpg, mtcars$drat, method = "pearson") |> 
   tidy()
 
 cor.test(mtcars$mpg, mtcars$wt, method = "pearson") |> 
@@ -97,6 +97,8 @@ cor.test(mtcars$mpg, mtcars$wt, method = "pearson") |>
 ```
 
 -   Relate os resultados e avalie quais tipos de carro são mais econômicos.
+
+Para avaliar a relação entre o consumo de combustível (`mpg`) e a razão final de transmissão (`drat`) dos veículos, foi realizado um teste de correlação de Pearson. Primeiramente, a normalidade das variáveis foi verificada utilizando o teste de Shapiro-Wilk, que indicou normalidade para mpg (W = 0.948, p = 0.123) e drat (W = 0.946, p = 0.110). Os resultados do teste de correlação de Pearson revelaram uma correlação positiva forte e significativa entre mpg e drat, r(30) = 0.681, p \< 0.001. O intervalo de confiança de 95% para a correlação foi de 0.436 a 0.832, sugerindo que, à medida que a razão final de transmissão aumenta, o consumo de combustível também tende a aumentar significativamente.
 
 ## Dados sobre prisões realizadas: Taxas de crimes violentos por estado dos EUA
 
@@ -115,7 +117,7 @@ Banco de dados: `USArrests`
 
 Objetivo: Explorar a relação entre a variáveis `Murder` e `UrbanPop`.
 
--   Crie um gráfico de dispersão (scatter plot) para visualizar as relação entre `Murder` e `UrbanPop`. Insira uma linha de regressão.
+-   Crie um gráfico de dispersão (scatter plot) para visualizar a relação entre `Murder` e `UrbanPop`. Insira uma linha de regressão.
 
 ```{r}
 ggplot(USArrests, aes(x = UrbanPop, y = Murder)) + 
@@ -126,6 +128,12 @@ ggplot(USArrests, aes(x = UrbanPop, y = Murder)) +
     x = "Porcentagem de população urbana", 
     y = "Prisões por assassinato (por 100.000)"
   )
+  
+hist(USArrests$Murder)
+
+USArrests |> 
+  ggplot(aes(Murder)) +
+  geom_histogram(bins = 10)
  
 ```
 
@@ -146,7 +154,9 @@ cor.test(USArrests$Murder, USArrests$UrbanPop, method = "pearson") |>
 
 -   Relate os resultados.
 
----------
+Para investigar a relação entre a taxa de assassinatos (Murder) e a porcentagem da população urbana (UrbanPop) nos estados dos EUA, foi realizado um teste de correlação de Pearson. Primeiramente, a normalidade das variáveis foi avaliada utilizando o teste de Shapiro-Wilk, que indicou que Murder (W = 0.957, p = 0.0667) e UrbanPop (W = 0.977, p = 0.438) não violaram significativamente a normalidade. O teste de correlação de Pearson revelou uma correlação positiva, mas não significativa, entre Murder e UrbanPop, r(48) = 0.0696, p = 0.631. O intervalo de confiança de 95% para a correlação foi de -0.213 a 0.341, indicando que não há uma associação linear significativa entre a taxa de assassinatos e a porcentagem da população urbana nos estados dos EUA.
+
+------------------------------------------------------------------------
 
 ## Dados suíços de fertilidade e indicadores socioeconômicos (1888)
 
@@ -157,9 +167,9 @@ Banco de dados: `swiss`
 **Formato** Um banco de dados com 47 observações sobre 6 variáveis, cada uma delas em porcentagem.
 
 -   `Fertility`: Medida comum de fertilidade padronizada
--   `Agriculture`: % de homens envolvidos na agricultura como ocupação [parei aqui]
+-   `Agriculture`: % de homens envolvidos na agricultura como ocupação \[parei aqui\]
 -   `Examination`: % de recrutas que recebem a nota mais alta no exame do exército
--   `	Education`: % educação além da escola primária para recrutados
+-   `Education`: % educação além da escola primária para recrutados
 -   `Catholic`: % ‘católico’ (em oposição a ‘protestante’)
 -   `Infant.Mortality`: nascidos vivos que vivem menos de 1 ano
 
@@ -198,7 +208,4 @@ cor.test(swiss$Fertility, swiss$Infant.Mortality, method = "pearson") |>
 
 -   Relate os resultados.
 
-
-
-
-
+Para investigar a relação entre a fertilidade (Fertility) e a mortalidade infantil (Infant.Mortality) em diferentes distritos da Suíça, foi realizado um teste de correlação de Pearson. Primeiramente, a normalidade das variáveis foi avaliada utilizando o teste de Shapiro-Wilk, que indicou que Fertility (W = 0.973, p = 0.345) e Infant.Mortality (W = 0.978, p = 0.498) não violaram significativamente a normalidade. O teste de correlação de Pearson revelou uma correlação positiva e significativa entre Fertility e Infant.Mortality, r(45) = 0.417, p = 0.00359. O intervalo de confiança de 95% para a correlação foi de 0.147 a 0.629, indicando que, à medida que a fertilidade aumenta, a mortalidade infantil também tende a aumentar significativamente nos distritos suíços.
