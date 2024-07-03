@@ -23,8 +23,13 @@ library(car)
 library(openintro)
 library(ggthemes)
 library(conflicted)
+library(gt)
 conflicts_prefer(dplyr::select)
 conflicts_prefer(dplyr::filter)
+conflicts_prefer(palmerpenguins::penguins)
+f <-list(ols_coll_diag, ols_test_breusch_pagan,
+         durbinWatsonTest, ols_test_normality)
+
 ```
 
 Faça as análises exploratórias (inclusive com gráficos), realize as análises de regressão linear a partir da VD e das VIs indicadas e:
@@ -33,15 +38,16 @@ Faça as análises exploratórias (inclusive com gráficos), realize as análise
 -   Relate os pressupostos que foram atendidos e os que não foram atendidos;
     -   Indique o número de outliers que são casos influentes no modelo a partir da distância de Cook, mas não os remova das análises
 -   Nos modelos em que todos os pressupostos da regressão forem atendidos:
-    -   Monte a equação de regressão (só inclua na equação os preditores que forem significativos no modelo);
-    -   Escreva a interpretação do intercepto $(b_{0})$ e dos parâmetros de inclinação $(b_{1})$; 
+    -   Monte a equação de regressão;
+    -   Escreva a interpretação do intercepto $(b_{0})$ e dos parâmetros de inclinação $(b_{1})$. Para além das questões formais e estatísticas, tentem avaliar os resultados a partir de suas implicações concretas em relação a cada banco de dados analisado, de modo compreender a intuição que subjaz a análise de regressão.; 
     - Avalie se o intercepto tem uma interpretação prática ou somente matemática
-    -   Calcule manualmente os valores previstos para os casos solicitado(s);
-    -   Escreva o relato dos resultados conforme modelo apresentado a seguir.
+    -   Calcule manualmente os valores previstos para os casos solicitados;
+    -   Escreva o relato dos resultados conforme modelo apresentado a seguir;
+-   Faça tabelas para apresentar os resultados, conforme modelo da APA, sétima edição, indicado abaixo.
 
 ## Modelo para o relato da regressão
 
-Avaliamos os pressupostos da regressão linear, confirmando a ausência de multicolinearidade (VIF < 2; tolerância > 0,3) e a independência dos resíduos (Durbin-Watson = 2,01; $p = 0,80$). No entanto, detectamos 104 potenciais outliers e encontramos heterocedasticidade (teste Breusch-Pagan: $\chi^2 = 47,1;$ $p < 0,001$) e distribuição não normal dos resíduos (teste Shapiro-Wilk: $W = 0,92$; $p < 0,001$). Além disso, as variâncias não foram homogêneas entre os níveis de escolaridade (teste de Levene: $\chi^2 = 15,96$; $p < 0,01$) e as categorias dos estilos de liderança do diretor escolar (teste de Levene: $\chi^2 = 8,68$; $p = 0,03$).
+Avaliamos os pressupostos da regressão linear, confirmando a ausência de multicolinearidade (VIF < 2; tolerância > 0,3) e a independência dos resíduos (Durbin-Watson = 2,01; $p = 0,80$). No entanto, detectamos 104 potenciais outliers, encontramos heterocedasticidade (teste de Breusch-Pagan: $\chi^2 = 47,1;$ $p < 0,001$) e distribuição não normal dos resíduos (teste de Shapiro-Wilk: $W = 0,92$; $p < 0,001$). Além disso, as variâncias não foram homogêneas entre os níveis de escolaridade (teste de Levene: $\chi^2 = 15,96$; $p < 0,01$) e as categorias dos estilos de liderança do diretor escolar (teste de Levene: $\chi^2 = 8,68$; $p = 0,03$).
 
 O modelo foi significativo ($F(16, 1794) = 14,16$); $p < 0,001$) e explicou 13% da variância $(R^2_{adj} = 0,13)$. Dentre as variáveis demográficas, apenas a idade previu os sintomas de depressão $(\beta = -0,03$; $p = 0,01)$.
 
@@ -126,11 +132,8 @@ Prestige |>
 
 ```{r}
 #| eval: false
-modelo_prestige_1 <- lm(prestige ~ type + (income), Prestige)
-f <-list(ols_coll_diag,
-         ols_test_breusch_pagan,
-         durbinWatsonTest,
-         ols_test_normality)
+modelo_prestige_1 <- lm(prestige ~ type + income, Prestige)
+
 map(f, ~ .(modelo_prestige_1))
 rstatix::levene_test(Prestige, formula = prestige ~ type)
 
@@ -153,10 +156,6 @@ Prestige |>
 ```{r}
 #| eval: false
 modelo_prestige_2 <- lm(prestige ~ education + income, Prestige)
-f <-list(ols_coll_diag,
-         ols_test_breusch_pagan,
-         durbinWatsonTest,
-         ols_test_normality)
 map(f, ~ .(modelo_prestige_2))
 
 
@@ -190,10 +189,6 @@ Prestige |>
 ```{r}
 #| eval: false
 modelo_prestige_3 <- lm(prestige ~ type + women, Prestige)
-f <-list(ols_coll_diag,
-         ols_test_breusch_pagan,
-         durbinWatsonTest,
-         ols_test_normality)
 map(f, ~ .(modelo_prestige_3))
 
 
@@ -214,10 +209,6 @@ modelo_prestige_3 |>
 #| eval: false
 modelo_prestige_4 <- lm(prestige ~ type + income + education 
                         + women, Prestige)
-f <-list(ols_coll_diag,
-         ols_test_breusch_pagan,
-         durbinWatsonTest,
-         ols_test_normality)
 map(f, ~ .(modelo_prestige_4))
 
 
@@ -228,6 +219,8 @@ modelo_prestige_4 |>
            \(x) round(x, 3))
   )
 ```
+
+## Dados sobre gambás da Austrália e Nova Guiné
 
 Banco de dados: `possum`
 
@@ -271,16 +264,10 @@ Comprimento da cauda, em cm.
 
 ```{r}
 modelo_possum_1 <- lm(total_l ~ sex + age + head_l, possum)
-
-f <-list(ols_coll_diag,
-         ols_test_breusch_pagan,
-         durbinWatsonTest,
-         ols_test_normality)
 map(f, ~ .(modelo_possum_1))
 
 summary(modelo_possum_1)
 ```
-
 
 ```{r}
 possum_augment <- modelo_possum_1 |> 
@@ -314,9 +301,129 @@ fitted_possum <- function(caso) {
 }
 ```
 
-*Exercício 5*
+```{r}
+possum |> 
+  write_csv("data/possum.csv")
+```
+
+
+**Exercício 5**
 
 -   VD: `total_l`
 -   VIs: `pop`,  `sex`, `age` e `head_l`
-- Calcule o valor previsto para os casos `1`, `8` e `9`
+-   Calcule o valor previsto para os casos `1`, `8` e `9`
+
+## Dados Sobre nascimentos nos EUA
+
+**Descrição** Dados de uma amostra aleatória de 100 nascimentos de bebês na Carolina do Norte, onde a mãe não era fumante, e outra de 50 nascimentos onde a mãe era fumante.
+
+**Formato**
+
+Um data frame com 150 observações sobre as seguintes 14 variáveis.
+
+`f_age`
+
+Idade do pai.
+
+`m_age`
+
+Idade da mãe.
+
+`weeks`
+
+Semanas em que a mãe deu à luz.
+
+`premature`
+
+Indica se o bebê foi prematuro ou não.
+
+`visits`
+
+Número de visitas ao hospital.
+
+`gained`
+
+Peso ganho pela mãe.
+
+`weight`
+
+Peso ao nascer do bebê.
+
+`sex_baby`
+
+Gênero do bebê.
+
+`smoke`
+
+Se a mãe era fumante ou não.
+
+```{r}
+modelo_nascimentos <- lm(weight ~ m_age + smoke + weeks, 
+   births)
+map(f, ~ .(modelo_nascimentos))
+```
+
+```{r}
+modelo_nascimentos |> 
+  tidy() |> 
+  mutate(
+    across(where(is.double),
+           \(x) round(x, 3))
+  )
+```
+
+```{r}
+births |> 
+  write_csv("data/births.csv")
+```
+
+**Exercício 6**
+
+-   VD: `weight`
+-   VIs: `m_age`,  `sex`, `smoke` e `weeks`
+-   Calcule o valor previsto para os casos `1` e `2` 
+
+## Dados sobre penguins
+
+**Descrição** Dados sobre três espécies de pinguins (Adélia, Gentoo e Chinstrap) coletados nas Ilhas Palmer, Antártica.
+
+**Formato**  
+Um data frame com 344 observações sobre as seguintes 8 variáveis:
+
+- **species**  
+  Espécie do pinguim (Adélia, Gentoo, Chinstrap).
+  
+- **island**  
+  Ilha onde o pinguim foi observado (Biscoe, Dream, Torgersen).
+  
+- **bill_length_mm**  
+  Comprimento do bico (mm).
+  
+- **bill_depth_mm**  
+  Profundidade do bico (mm).
+  
+- **flipper_length_mm**  
+  Comprimento da nadadeira (mm).
+  
+- **body_mass_g**  
+  Massa corporal (g).
+  
+- **sex**  
+  Sexo do pinguim (masculino, feminino).
+  
+- **year**  
+  Ano da observação (2007, 2008, 2009).
+
+```{r}
+modelo_penguins <- lm(body_mass_g ~ species + flipper_length_mm, 
+   penguins)
+map(f, ~ .(modelo_penguins))
+
+```
+
+**Exercício 7**
+
+-   VD: `body_mass_g`
+-   VIs: `m_age`, `species`, e `flipper_length_mm`
+-   Calcule o valor previsto para os casos `1`, `277` e `153`
 
